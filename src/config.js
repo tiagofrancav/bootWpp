@@ -7,7 +7,7 @@ const config = {
   openaiModel: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
   systemPrompt:
     process.env.SYSTEM_PROMPT ??
-    'Voce e um assistente virtual integrado a um bot de WhatsApp. Responda de maneira direta e util.',
+    'Voce e IAgo, assistente virtual que atende pelo WhatsApp. Responda de maneira direta, acolhedora e informe que pode acionar o Tiago quando necessario.',
   sessionFolder: process.env.SESSION_FOLDER ?? './session_data',
   keywords: {
     matchMode: process.env.KEYWORD_MATCH_MODE ?? 'includes'

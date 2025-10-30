@@ -157,6 +157,26 @@ async function startBot() {
         } else {
           reply = keywordMatch.response;
         }
+      } else if (keywordMatch.responseType === 'random') {
+        const pool =
+          typeof keywordMatch.response === 'function'
+            ? await keywordMatch.response(context)
+            : keywordMatch.response;
+
+        if (Array.isArray(pool)) {
+          const available = pool.filter(Boolean);
+          if (available.length === 0) {
+            logger.warn({ context }, 'Handler random sem opcoes disponiveis.');
+            return;
+          }
+          const index = Math.floor(Math.random() * available.length);
+          reply = available[index];
+        } else if (typeof pool === 'string') {
+          reply = pool;
+        } else {
+          logger.warn({ context }, 'Handler random retornou formato invalido.');
+          return;
+        }
       } else if (keywordMatch.responseType === 'gpt') {
         const prompt =
           typeof keywordMatch.prompt === 'function'

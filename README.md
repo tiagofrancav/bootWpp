@@ -3,7 +3,7 @@
 Projeto base em Node.js que cria um bot para WhatsApp usando a biblioteca [Baileys](https://github.com/WhiskeySockets/Baileys). O bot suporta:
 
 - autenticacao via QR code;
-- respostas prontas a palavras-chave;
+- respostas prontas a palavras-chave (IAgo se apresenta como assistente);
 - integracao com ChatGPT para respostas dinamicas;
 - configuracao simples via arquivo `.env`.
 
@@ -22,12 +22,28 @@ Projeto base em Node.js que cria um bot para WhatsApp usando a biblioteca [Baile
 
 - `src/index.js`: ponto de entrada do bot e gerenciamento da sessao Baileys.
 - `src/chatgpt.js`: cliente OpenAI e funcao utilitaria para solicitar respostas ao modelo.
-- `src/keywords.js`: lista e regras das palavras-chave com respostas estaticas ou dinamicas.
+- `src/keywords.js`: lista e regras das palavras-chave com respostas estaticas ou dinamicas (IAgo).
 - `src/config.js`: leitura de variaveis ambiente e valores default.
 - `src/logger.js`: logger com Pino.
 - `.env.example`: modelo de configuracao.
 
 Os dados de autenticacao do WhatsApp sao gravados por padrao em `./session_data`. E possivel alterar definindo `SESSION_FOLDER` no `.env`.
+
+## Comandos padrao do IAgo
+
+| Palavra/Comando      | Tipo      | Acao do assistente                                                                 |
+|----------------------|-----------|-------------------------------------------------------------------------------------|
+| `oi`, `bom dia` etc. | Static    | Saudacao apresentando o IAgo como assistente.                                      |
+| `menu` ou `ajuda`    | Static    | Lista os principais atalhos e orientacoes.                                        |
+| `status`             | Static    | Informa situacao do IAgo e horario da ultima atualizacao.                          |
+| `agendar`            | Static    | Coleta dia/horario e registra pedido de reuniao.                                   |
+| `urgente`            | Static    | Responde com humor, acalma e lembra que o Tiago atende por ordem de chegada.      |
+| `piada`              | Random    | Envia uma piada aleatoria para descontrair.                                        |
+| `motivacao`          | Random    | Entrega mensagens motivacionais variadas.                                         |
+| `falar com tiago`    | Static    | Registra pedido para atendimento humano direto com o Tiago.                        |
+| `gpt {pergunta}`     | GPT       | Faz o IAgo responder via ChatGPT mantendo o tom do assistente.                     |
+| Mensagens com `duvida`, `pergunta`, `me ajuda` | GPT | IAgo aciona a IA para responder orientando e oferecendo escalonar para o Tiago. |
+| `news`               | GPT       | Retorna novidade de tecnologia em portugues com tom profissional.                 |
 
 ## Configurando palavras-chave
 
@@ -35,7 +51,7 @@ Edite `src/keywords.js` para personalizar os gatilhos. Cada entrada aceita:
 
 - `keywords`: array de palavras ou trechos a monitorar;
 - `match`: estrategia de comparacao (`exact`, `startsWith` ou `includes`);
-- `responseType`: `static` (texto pronto ou funcao) ou `gpt` (usa ChatGPT);
+- `responseType`: `static` (texto pronto ou funcao), `random` (escolhe opcao aleatoria) ou `gpt` (usa ChatGPT);
 - `response`: string ou funcao async para respostas fixas;
 - `prompt`: string ou funcao que monta o prompt enviado ao ChatGPT.
 
@@ -50,6 +66,20 @@ Exemplo de resposta estatica rapida:
 }
 ```
 
+Exemplo com respostas aleatorias:
+
+```js
+{
+  keywords: ['piada'],
+  match: 'includes',
+  responseType: 'random',
+  response: [
+    'Porque o computador foi ao medico? Estava com um virus.',
+    'Minha produtividade ta igual senha errada: nao conecta.'
+  ]
+}
+```
+
 Exemplo acionando a IA com o prefixo `gpt`:
 
 ```js
@@ -59,7 +89,7 @@ Exemplo acionando a IA com o prefixo `gpt`:
   responseType: 'gpt',
   prompt: (message, context) => {
     const pergunta = context.payload || 'Me de uma dica rapida.';
-    return `Responda em portugues e de modo direto: "${pergunta}".`;
+    return `Voce e IAgo, assistente virtual do Tiago. Responda em portugues e mantenha o tom acolhedor: "${pergunta}".`;
   }
 }
 ```
@@ -70,7 +100,7 @@ Exemplo acionando a IA com o prefixo `gpt`:
 |-----------------|-------------|----------------------------------------------------------------------|
 | `OPENAI_API_KEY`| Sim         | Chave da API OpenAI para usar o ChatGPT.                             |
 | `OPENAI_MODEL`  | Nao         | Modelo desejado (padrao `gpt-4o-mini`).                             |
-| `SYSTEM_PROMPT` | Nao         | Prompt de sistema aplicado a todas as conversas.                     |
+| `SYSTEM_PROMPT` | Nao         | Prompt de sistema aplicado a todas as conversas (padrao usa IAgo).   |
 | `SESSION_FOLDER`| Nao         | Caminho da pasta onde a sessao do WhatsApp sera armazenada.          |
 | `LOG_LEVEL`     | Nao         | Nivel de log do Pino (padrao `info`).                                |
 
