@@ -7,9 +7,16 @@ import qrcode from 'qrcode-terminal';
 import config from './config.js';
 import logger from './logger.js';
 import askChatGPT from './chatgpt.js';
-import { matchKeyword } from './keywords.js';
+import keywordHandlers, { matchKeyword } from './keywords.js';
 
 const cleanExitHandlers = new Set();
+const ONE_HOUR_MS = 60 * 60 * 1_000;
+const lastInteractions = new Map();
+
+const greetingHandler = keywordHandlers.find(handler => handler.id === 'greeting');
+
+const greetingText =
+  greetingHandler && typeof greetingHandler.response === 'string' ? greetingHandler.response : null;
 
 function registerCleanExit(callback) {
   cleanExitHandlers.add(callback);
@@ -139,14 +146,45 @@ async function startBot() {
 
     if (fromMe || !remoteJid) return;
 
+    if (remoteJid.endsWith('@g.us')) {
+      logger.debug({ remoteJid }, 'Mensagem ignorada por ser de grupo.');
+      return;
+    }
+
     const text = extractMessageText(message);
     if (!text) return;
+
+    const now = Date.now();
+    const interaction =
+      lastInteractions.get(remoteJid) ?? { lastMessageAt: 0, lastGreetingAt: 0 };
+    const inactiveForOneHour =
+      !interaction.lastMessageAt || now - interaction.lastMessageAt >= ONE_HOUR_MS;
+
+    let autoGreetingSent = false;
+
+    if (inactiveForOneHour) {
+      interaction.lastGreetingAt = now;
+
+      if (greetingText) {
+        await sock.sendMessage(remoteJid, { text: greetingText });
+      }
+
+      autoGreetingSent = true;
+      logger.info({ remoteJid }, 'Saudacao automatica reenviada apos inatividade.');
+    }
+
+    interaction.lastMessageAt = now;
+    lastInteractions.set(remoteJid, interaction);
 
     logger.info({ remoteJid, text }, 'Mensagem recebida');
 
     const keywordMatch = matchKeyword(text);
 
     if (!keywordMatch) return;
+
+    if (autoGreetingSent && (keywordMatch.id === 'greeting' || keywordMatch.id === 'menu')) {
+      return;
+    }
 
     const context = buildContext(text, keywordMatch, message);
 
