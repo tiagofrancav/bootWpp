@@ -3,6 +3,7 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   useMultiFileAuthState
 } from '@whiskeysockets/baileys';
+import qrcode from 'qrcode-terminal';
 import config from './config.js';
 import logger from './logger.js';
 import askChatGPT from './chatgpt.js';
@@ -108,6 +109,7 @@ async function startBot() {
 
     if (qr) {
       logger.info('QR code gerado. Escaneie com o WhatsApp para conectar.');
+      qrcode.generate(qr, { small: true });
     }
 
     if (connection === 'close') {

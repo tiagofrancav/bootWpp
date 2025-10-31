@@ -1,0 +1,10 @@
+{
+  "watch": [
+    "src"
+  ],
+  "ignore": [
+    "session_data",
+    "session_data/*",
+    "session_data/**"
+  ]
+}
