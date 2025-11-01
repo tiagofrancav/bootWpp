@@ -10,7 +10,7 @@ import askChatGPT from './chatgpt.js';
 import keywordHandlers, { matchKeyword } from './keywords.js';
 
 const cleanExitHandlers = new Set();
-const ONE_HOUR_MS = 60 * 60 * 1_000;
+const FIVE_MINUTES_MS = 5 * 60 * 1_000;
 const lastInteractions = new Map();
 
 const greetingHandler = keywordHandlers.find(handler => handler.id === 'greeting');
@@ -157,12 +157,12 @@ async function startBot() {
     const now = Date.now();
     const interaction =
       lastInteractions.get(remoteJid) ?? { lastMessageAt: 0, lastGreetingAt: 0 };
-    const inactiveForOneHour =
-      !interaction.lastMessageAt || now - interaction.lastMessageAt >= ONE_HOUR_MS;
+    const inactiveForInterval =
+      !interaction.lastMessageAt || now - interaction.lastMessageAt >= FIVE_MINUTES_MS;
 
     let autoGreetingSent = false;
 
-    if (inactiveForOneHour) {
+    if (inactiveForInterval) {
       interaction.lastGreetingAt = now;
 
       if (greetingText) {
